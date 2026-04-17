@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSurah, fetchAyat } from "./quranSlice";
+import PrayerTime from "../../components/PrayerTime";
 
 export default function QuranView() {
   const dispatch = useDispatch();
