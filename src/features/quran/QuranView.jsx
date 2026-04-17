@@ -10,30 +10,24 @@ export default function QuranView() {
   const [selectedSurah, setSelectedSurah] = useState(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [dark, setDark] = useState(true); // 🌙 toggle
 
   useEffect(() => {
     dispatch(fetchSurah());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (selectedSurah) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [selectedSurah]);
-
   const handleClick = (s) => {
     setSelectedSurah(s);
     dispatch(fetchAyat(s.nomor));
+    window.scrollTo({ top: 0 });
   };
 
   const isMekah = (t) => t?.toLowerCase() === "mekah";
 
-  // 🔍 FILTER + SEARCH
   const filtered = surah.filter((s) => {
-    const matchSearch =
-      s.namaLatin.toLowerCase().includes(search.toLowerCase()) ||
-      s.arti.toLowerCase().includes(search.toLowerCase()) ||
-      s.nomor.toString().includes(search);
+    const matchSearch = s.namaLatin
+      .toLowerCase()
+      .includes(search.toLowerCase());
 
     const matchFilter =
       filter === "all"
@@ -45,272 +39,286 @@ export default function QuranView() {
     return matchSearch && matchFilter;
   });
 
-  const totalSurah = surah.length;
-  const totalAyat = surah.reduce((acc, s) => acc + s.jumlahAyat, 0);
-
   return (
-    <div className="container">
+    <div className={dark ? "app dark" : "app light"}>
       <h1 className="title">Al-Qur'an Digital Bintang</h1>
 
-      {!selectedSurah && (
-        <>
-          {/* STATS */}
-          <div className="stats">
-            <span>🟢 {totalSurah} Surat</span>
-            <span>🔵 {totalAyat} Ayat</span>
-            <span>🟡 30 Juz</span>
-          </div>
+      {/* 🌗 TOGGLE */}
+      <div className="toggle">
+        <button onClick={() => setDark(!dark)}>
+          {dark ? "☀ Mode Terang" : "🌙 Mode Gelap"}
+        </button>
+      </div>
 
-          {/* SEARCH */}
-          <input
-            type="text"
-            placeholder="Cari surat..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search"
-          />
+      <div className="layout">
+        {/* 🕌 SIDEBAR */}
+        <div className="sidebar">
+          <PrayerTime />
+        </div>
 
-          {/* FILTER */}
-          <div className="filter">
-            <button
-              className={filter === "all" ? "active" : ""}
-              onClick={() => setFilter("all")}
-            >
-              Semua
-            </button>
+        {/* 📖 MAIN */}
+        <div className="main">
+          {!selectedSurah && (
+            <>
+              <input
+                type="text"
+                placeholder="Cari surat..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="search"
+              />
 
-            <button
-              className={filter === "mekah" ? "active" : ""}
-              onClick={() => setFilter("mekah")}
-            >
-              🌴 Makkiyah
-            </button>
+              <div className="filter">
+                <button onClick={() => setFilter("all")}>Semua</button>
+                <button onClick={() => setFilter("mekah")}>Makkiyah</button>
+                <button onClick={() => setFilter("madinah")}>Madaniyah</button>
+              </div>
 
-            <button
-              className={filter === "madinah" ? "active" : ""}
-              onClick={() => setFilter("madinah")}
-            >
-              🕌 Madaniyah
-            </button>
-          </div>
-
-          {/* 🔥 NO RESULT / GRID */}
-          {filtered.length === 0 && search !== "" ? (
-            <div className="no-result">
-              <h3>Tidak ada hasil</h3>
-              <p>
-                Surat "<b>{search}</b>" tidak ditemukan. Coba kata kunci lain.
-              </p>
-            </div>
-          ) : (
-            <div className="grid">
-              {filtered.map((s) => (
-                <div
-                  key={s.nomor}
-                  onClick={() => handleClick(s)}
-                  className="card"
-                >
-                  <div className="top">
-                    <span className="nomor">{s.nomor}</span>
-                    <span className="arab">{s.nama}</span>
-                  </div>
-
-                  <h3>{s.namaLatin}</h3>
-                  <p>{s.arti}</p>
-
-                  <div className="bottom">
-                    <span
-                      className={isMekah(s.tempatTurun) ? "mekah" : "madinah"}
+              {filtered.length === 0 && search !== "" ? (
+                <div className="no-result">
+                  Tidak ada hasil "{search}"
+                </div>
+              ) : (
+                <div className="grid">
+                  {filtered.map((s) => (
+                    <div
+                      key={s.nomor}
+                      onClick={() => handleClick(s)}
+                      className="card"
                     >
-                      {isMekah(s.tempatTurun) ? "Mekah" : "Madinah"}
-                    </span>
-                    <span>{s.jumlahAyat} Ayat</span>
-                  </div>
+                      <h3>{s.namaLatin}</h3>
+                      <p>{s.arti}</p>
+                      <span>
+                        {isMekah(s.tempatTurun)
+                          ? "Mekah"
+                          : "Madinah"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {selectedSurah && (
+            <div>
+<button
+  onClick={() => setSelectedSurah(null)}
+  className="back-btn"
+>
+  ⬅ Kembali
+</button>
+
+              {ayat.map((a) => (
+                <div key={a.nomorAyat} className="ayat">
+                  <p className="arab">{a.teksArab}</p>
+                  <p>{a.teksIndonesia}</p>
                 </div>
               ))}
             </div>
           )}
-        </>
-      )}
-
-      {/* AYAT VIEW */}
-      {selectedSurah && (
-        <div>
-          <button onClick={() => setSelectedSurah(null)} className="back">
-            ⬅ Kembali
-          </button>
-
-          <h2 className="surah-title">
-            {selectedSurah.namaLatin} ({selectedSurah.nama})
-          </h2>
-
-          {ayat.map((a) => (
-            <div key={a.nomorAyat} className="ayat">
-              <p className="arab">{a.teksArab}</p>
-              <p>{a.teksIndonesia}</p>
-            </div>
-          ))}
         </div>
-      )}
+      </div>
 
-      {/* STYLE */}
-      <style>{`
-        body {
-          margin: 0;
-          background: radial-gradient(circle at top, #0f172a, #020617);
-          font-family: Arial;
-          color: white;
-        }
+      {/* 🎨 STYLE */}
+  <style>{`
+  * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+  .back-btn {
+  margin-bottom: 15px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  background: #38bdf8;
+  color: #020617;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
 
-        .container {
-          padding: 20px;
-          max-width: 1100px;
-          margin: auto;
-        }
+.back-btn:hover {
+  background: #0ea5e9;
+  box-shadow: 0 0 10px #38bdf8;
+  transform: translateY(-2px);
+}
 
-        .title {
-          text-align: center;
-          color: #38bdf8;
-          text-shadow: 0 0 10px #38bdf8;
-        }
+/* LIGHT MODE */
+.light .back-btn {
+  background: #0ea5e9;
+  color: white;
+}
+  .app {
+    min-height: 100vh;
+    font-family: Arial;
+    padding: 20px;
+  }
 
-        .stats {
-          display: flex;
-          justify-content: center;
-          gap: 20px;
-          margin: 10px 0;
-        }
+  .dark {
+    background: radial-gradient(circle at top, #0f172a, #020617);
+    color: white;
+  }
 
-        .search {
-          width: 300px;
-          padding: 10px;
-          border-radius: 10px;
-          border: none;
-          background: #1e293b;
-          color: white;
-          margin: 15px auto;
-          display: block;
-        }
+  .light {
+    background: #f1f5f9;
+    color: black;
+  }
 
-        .search:focus {
-          outline: none;
-          box-shadow: 0 0 10px #38bdf8;
-        }
+  .title {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #38bdf8;
+    text-shadow: 0 0 10px #38bdf8;
+  }
 
-        .filter {
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          margin-bottom: 15px;
-        }
+  .toggle {
+    text-align: center;
+    margin-bottom: 20px;
+  }
 
-        .filter button {
-          padding: 6px 12px;
-          border-radius: 8px;
-          border: none;
-          background: #1e293b;
-          color: white;
-          cursor: pointer;
-        }
+  .toggle button {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
 
-        .filter .active {
-          background: #38bdf8;
-          color: black;
-        }
+  /* 🔥 LAYOUT */
+  .layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
 
-        .grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 15px;
-        }
+  /* 🕌 SIDEBAR */
+  .sidebar {
+    width: 260px;
+  }
 
-        .card {
-          background: rgba(30,41,59,0.7);
-          padding: 15px;
-          border-radius: 15px;
-          cursor: pointer;
-          transition: 0.3s;
-        }
+  .sidebar .prayer {
+    position: sticky;
+    top: 20px;
+  }
 
-        .card:hover {
-          box-shadow: 0 0 20px #38bdf8;
-          transform: translateY(-5px);
-        }
+  /* 📖 MAIN */
+  .main {
+    flex: 1;
+  }
 
-        .top {
-          display: flex;
-          justify-content: space-between;
-        }
+  /* 🔍 SEARCH */
+  .search {
+    width: 300px;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: #1e293b;
+    color: white;
+    margin-bottom: 10px;
+  }
 
-        .nomor {
-          background: #f59e0b;
-          border-radius: 50%;
-          padding: 5px 10px;
-        }
+  .light .search {
+    background: white;
+    color: black;
+    border: 1px solid #ccc;
+  }
 
-        .arab {
-          color: #22c55e;
-          font-size: 20px;
-        }
+  /* 🔘 FILTER */
+  .filter {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
 
-        .bottom {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 10px;
-          font-size: 12px;
-        }
+  .filter button {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    background: #1e293b;
+    color: white;
+    cursor: pointer;
+  }
 
-        .mekah {
-          color: #22c55e;
-        }
+  .light .filter button {
+    background: white;
+    color: black;
+    border: 1px solid #ccc;
+  }
 
-        .madinah {
-          color: #f59e0b;
-        }
+  /* 📦 GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+  }
 
-        .no-result {
-          text-align: center;
-          margin-top: 40px;
-          color: #94a3b8;
-        }
+  /* 🧱 CARD */
+  .card {
+    background: rgba(30, 41, 59, 0.7);
+    padding: 15px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+  }
 
-        .no-result h3 {
-          color: #38bdf8;
-        }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 15px #38bdf8;
+  }
 
-        .back {
-          margin-bottom: 15px;
-          padding: 8px;
-          background: #38bdf8;
-          border: none;
-          border-radius: 8px;
-          cursor: pointer;
-        }
+  .light .card {
+    background: white;
+    border: 1px solid #ddd;
+  }
 
-        .ayat {
-          margin: 20px 0;
-          padding: 15px;
-          background: #0f172a;
-          border-radius: 10px;
-        }
+  /* 📖 AYAT */
+  .ayat {
+    background: #0f172a;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+  }
 
-        .ayat .arab {
-          text-align: right;
-          font-size: 24px;
-        }
+  .light .ayat {
+    background: white;
+  }
 
-        @media (max-width: 768px) {
-          .grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
+  .arab {
+    text-align: right;
+    font-size: 22px;
+    color: #22c55e;
+  }
 
-        @media (max-width: 500px) {
-          .grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
+  /* ❌ NO RESULT */
+  .no-result {
+    margin-top: 30px;
+    text-align: center;
+    color: #94a3b8;
+  }
+
+  /* 📱 RESPONSIVE */
+  @media (max-width: 900px) {
+    .layout {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+    }
+
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 500px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+`}</style>
     </div>
   );
 }

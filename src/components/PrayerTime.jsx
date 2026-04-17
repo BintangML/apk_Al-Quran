@@ -16,7 +16,7 @@ export default function PrayerTime() {
         const { latitude, longitude } = pos.coords;
 
         try {
-          // 🔥 Ambil nama kota
+          // ambil kota
           const geoRes = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
           );
@@ -31,7 +31,7 @@ export default function PrayerTime() {
 
           setKota(city);
 
-          // 🔥 Ambil jadwal sholat
+          // ambil jadwal sholat
           const res = await fetch(
             `https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=2`
           );
@@ -39,7 +39,6 @@ export default function PrayerTime() {
 
           setJadwal(data.data.timings);
         } catch (err) {
-          console.error(err);
           setError("Gagal ambil data ❌");
         }
       },
@@ -81,17 +80,12 @@ export default function PrayerTime() {
 
         .kota {
           color: #94a3b8;
-          margin-bottom: 10px;
         }
 
         .list div {
           margin: 6px 0;
           color: #38bdf8;
           font-weight: bold;
-        }
-
-        .loading {
-          color: #94a3b8;
         }
 
         .error {
